@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ESP8266 Datalogger</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- JSZip CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>ESP8266 Datalogger</h1>
+    <div id="status">
+      <div>Aktuelle Werte: <span id="live">—</span></div>
+      <div id="storage">Speicher: —</div>
+    </div>
+
+    <div id="controls">
+      <label>Intervall:
+        <select id="intervalSelect"></select>
+      </label>
+      <button id="applyInterval">Anwenden</button>
+      <button id="downloadWeek">Download aktuelle Woche (CSV)</button>
+      <button id="downloadAll">Download alles (ZIP)</button>
+      <button id="deletePrev">Alte Wochen löschen</button>
+      <button id="deleteAll">Alle Daten löschen</button>
+    </div>
+
+    <canvas id="chart" width="800" height="300"></canvas>
+
+    <div id="weeksList"></div>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>

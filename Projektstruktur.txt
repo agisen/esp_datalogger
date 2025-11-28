@@ -1,0 +1,29 @@
+/Datalogger/
+│
+├── Datalogger.ino            → Haupt-Sketch (Setup, Loop, Puffersteuerung)
+│
+├── data/                     → Wird per „Hochladen in LittleFS“ auf ESP geladen
+│   ├── index.html            → Dashboard + Charts + Buttons
+│   ├── script.js             → Client-Logic (Charts, ZIP-Download, API-Abfragen)
+│   ├── style.css             → Oberfläche
+│   ├── chart.min.js          → Charting-Library
+│   └── jszip.min.js          → ZIP-Library (Client-Side ZIP)
+│
+├── lib/                      → C++ Module
+│   ├── Sensor/
+│   │   ├── Sensor.cpp
+│   │   └── Sensor.h
+│   │
+│   ├── Storage/
+│   │   ├── Storage.cpp
+│   │   └── Storage.h
+│   │
+│   ├── Webserver/
+│   │   ├── Webserver.cpp
+│   │   └── Webserver.h
+│   │
+│   └── Utils/
+│       ├── Utils.cpp
+│       └── Utils.h
+│
+└── settings.json (optional lokale Default-Datei)

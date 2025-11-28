@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin: 10px; }
+.container { max-width: 900px; margin: auto; }
+#status { margin-bottom: 10px; }
+#controls { margin-bottom: 10px; }
+button { margin-left: 6px; }
+#weeksList { margin-top: 10px; font-size: 0.9em; color: #333; }

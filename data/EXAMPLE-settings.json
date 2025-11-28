@@ -1,0 +1,7 @@
+DELETE THIS LINE, ADAPT TO YOUR VALUES AND RENAME THIS FILE TO "settings.json" 
+{
+  "interval": 300,
+  "wifi_ssid": "DEIN_WLAN",
+  "wifi_pass": "DEIN_PASSWORT",
+  "http_password": "admin"
+}
