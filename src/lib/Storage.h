@@ -8,6 +8,11 @@ struct Measurement {
   float hum;
 };
 
+struct FsUsage {
+  size_t used;
+  size_t total;
+};
+
 class Storage {
 public:
   Storage();
@@ -21,8 +26,7 @@ public:
   bool loadSettings(uint32_t &intervalSeconds, String &ssid, String &pass, String &httpPassword);
 
   // Storage info
-  uint64_t usedBytes();
-  uint64_t totalBytes();
+  FsUsage getFsUsage();
 
   // Get list of weeks (filenames without leading '/')
   void listWeeks(std::vector<String> &outWeeks);

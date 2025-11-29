@@ -12,18 +12,30 @@ void Utils::begin() {
 
 void Utils::connectWiFi(const char* ssid, const char* pass) {
   if (WiFi.status() == WL_CONNECTED) return;
-  unsigned long now = millis();
-  if ((now - lastWifiTry) < WIFI_RETRY_INTERVAL) return;
-  lastWifiTry = now;
-  Serial.printf("Utils: connecting to WiFi %s\n", ssid);
+  Serial.printf("Utils: connecting to WiFi \"%s\"", ssid);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.print("Connected! IP: ");
+  Serial.println(WiFi.localIP());
 }
 
 void Utils::initNTP() {
   // Use system configTime
-  configTime(0, 0, "pool.ntp.org", "time.google.com");
+  configTime(0, 0, "0.europe.pool.ntp.org", "time.google.com");
   ntpInitialized = true;
+
+  Serial.print("Waiting for NTP time..");
+    time_t now = 0;
+    while (now < 8 * 3600 * 2) { // arbitrary check: time > Jan 2 1970
+        delay(500);                // wait 500 ms
+        now = time(nullptr);
+        Serial.print(".");
+    }
+    Serial.println("NTP synced!");
 }
 
 void Utils::handle() {
@@ -54,8 +66,8 @@ time_t Utils::getEpoch() {
 String Utils::weekNameFromEpoch(time_t t) {
   tm tmstruct;
   gmtime_r(&t, &tmstruct);
-  int year = tmstruct.tm_year + 1900;
-  int week = (tmstruct.tm_yday / 7) + 1;
+  unsigned int year = tmstruct.tm_year + 1900;
+  unsigned int week = (tmstruct.tm_yday / 7) + 1;
   char buf[16];
   snprintf(buf, sizeof(buf), "%04d-W%02d.csv", year, week);
   return String(buf);

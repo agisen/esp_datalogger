@@ -8,23 +8,32 @@ Storage::Storage() {}
 void Storage::begin() {
   // LittleFS already mounted in sketch, but we can check
   if (!LittleFS.begin()) {
-    Serial.println(F("Storage: LittleFS begin failed"));
+    Serial.println(F("Storage: LittleFS.begin() failed"));
   } else {
     Serial.println(F("Storage: LittleFS ready"));
   }
+
+  Serial.println("Listing all files in LittleFS:");
 }
 
-uint64_t Storage::usedBytes() {
-  return LittleFS.usedBytes();
-}
-uint64_t Storage::totalBytes() {
-  return LittleFS.totalBytes();
+FsUsage Storage::getFsUsage() {
+  FSInfo info;
+  LittleFS.info(info);
+  return { info.usedBytes, info.totalBytes };
 }
 
 bool Storage::loadSettings(uint32_t &intervalSeconds, String &ssid, String &pass, String &httpPassword) {
-  if (!LittleFS.exists("/settings.json")) return false;
+  if (!LittleFS.exists("/settings.json")) {
+    Serial.println(F("Storage: settings.json does not exist"));
+    return false;
+  }
+
   File f = LittleFS.open("/settings.json", "r");
-  if (!f) return false;
+  if (!f) {
+    Serial.println(F("Storage: failed to open settings.json"));
+    return false;
+  }
+
   size_t size = f.size();
   std::unique_ptr<char[]> buf(new char[size + 1]);
   f.readBytes(buf.get(), size);
@@ -37,25 +46,30 @@ bool Storage::loadSettings(uint32_t &intervalSeconds, String &ssid, String &pass
     Serial.println(F("Storage: settings.json parse error"));
     return false;
   }
-  if (doc.containsKey("interval")) intervalSeconds = doc["interval"];
-  if (doc.containsKey("wifi_ssid")) ssid = String((const char*)doc["wifi_ssid"]);
-  if (doc.containsKey("wifi_pass")) pass = String((const char*)doc["wifi_pass"]);
-  if (doc.containsKey("http_password")) httpPassword = String((const char*)doc["http_password"]);
+  if (doc["interval"].is<uint32_t>())
+    intervalSeconds = doc["interval"].as<uint32_t>();
+  if (doc["wifi_ssid"].is<const char*>())
+    ssid = doc["wifi_ssid"].as<const char*>();
+  if (doc["wifi_pass"].is<const char*>())
+    pass = doc["wifi_pass"].as<const char*>();
+  if (doc["http_password"].is<const char*>())
+    httpPassword = doc["http_password"].as<const char*>();
+
+  Serial.println(F("Storage: Settings loaded from settings.json"));
   return true;
 }
 
 static String weekNameFromTime(time_t t) {
   // simple week number (year-week) using day-of-year/7 (not strict ISO)
-  tm tm;
-  gmtime_r(&t, &tm);
-  int year = tm.tm_year + 1900;
-  int week = (tm.tm_yday / 7) + 1; // 1..53
+  tm tmstruct;
+  gmtime_r(&t, &tmstruct);
+  unsigned int year = tmstruct.tm_year + 1900;
+  unsigned int week = (tmstruct.tm_yday / 7) + 1; // 1..53
   char buf[16];
   snprintf(buf, sizeof(buf), "%04d-W%02d", year, week);
   return String(buf);
 }
 
-// ---------- REPARIERTE saveBatch ----------
 bool Storage::saveBatch(Measurement *arr, uint8_t len) {
   if (len == 0) return true;
 
@@ -63,8 +77,9 @@ bool Storage::saveBatch(Measurement *arr, uint8_t len) {
   uint32_t estimated = (uint32_t)len * 40;
 
   // Check 85%-rule
-  uint64_t used = usedBytes();
-  uint64_t total = totalBytes();
+  FsUsage fs = getFsUsage();
+  uint64_t used  = fs.used;
+  uint64_t total = fs.total;
   uint64_t threshold = (total * 85) / 100;
   Serial.printf("Storage: used=%llu total=%llu threshold=%llu need=%u\n", (unsigned long long)used, (unsigned long long)total, (unsigned long long)threshold, estimated);
 
@@ -75,7 +90,8 @@ bool Storage::saveBatch(Measurement *arr, uint8_t len) {
       Serial.println(F("Storage: cannot free more space"));
       return false;
     }
-    used = usedBytes();
+    fs = getFsUsage();
+    used = fs.used;
   }
 
   // Determine current week file name (use time of first measurement)
@@ -104,11 +120,13 @@ bool Storage::saveBatch(Measurement *arr, uint8_t len) {
 void Storage::listWeeks(std::vector<String> &outWeeks) {
   outWeeks.clear();
   Dir dir = LittleFS.openDir("/");
+  Serial.println("Listing week files in LittleFS:");
   while (dir.next()) {
     String name = dir.fileName(); // starts with "/"
     if (name.endsWith(".csv")) {
       name = name.substring(1); // strip '/'
       outWeeks.push_back(name);
+      Serial.println("  Found week file: " + name);
     }
   }
 }

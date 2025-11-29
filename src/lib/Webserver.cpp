@@ -1,4 +1,4 @@
-// lib/Webserver/Webserver.cpp
+// lib/Webserver.cpp
 #include "Webserver.h"
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -19,37 +19,41 @@ void WebserverHandler::handleClient() {
 }
 
 void WebserverHandler::setupRoutes() {
-  server.on("/", HTTP_GET, std::bind(&WebserverHandler::handleRoot, this));
-  server.on("/api/weeks", HTTP_GET, std::bind(&WebserverHandler::handleGetWeeks, this));
-  server.on("/api/storageinfo", HTTP_GET, std::bind(&WebserverHandler::handleGetStorageInfo, this));
-  server.on("/api/download_week", HTTP_GET, std::bind(&WebserverHandler::handleDownloadWeek, this));
-  server.on("/api/download_all", HTTP_GET, std::bind(&WebserverHandler::handleDownloadAll, this));
-  server.on("/api/delete_all", HTTP_POST, std::bind(&WebserverHandler::handleDeleteAll, this));
-  server.on("/api/delete_prev", HTTP_POST, std::bind(&WebserverHandler::handleDeletePrevious, this));
-  server.on("/api/get_settings", HTTP_GET, std::bind(&WebserverHandler::handleGetSettings, this));
-  server.on("/api/set_settings", HTTP_POST, std::bind(&WebserverHandler::handleSetSettings, this));
-  server.onNotFound([](){
-    // try to serve static files from LittleFS
+  server.on("/api/weeks",          HTTP_GET,  [this]() { handleGetWeeks(); });
+  server.on("/api/storageinfo",    HTTP_GET,  [this]() { handleGetStorageInfo(); });
+  server.on("/api/download_week",  HTTP_GET,  [this]() { handleDownloadWeek(); });
+  server.on("/api/download_all",   HTTP_GET,  [this]() { handleDownloadAll(); });
+  server.on("/api/delete_all",     HTTP_POST, [this]() { handleDeleteAll(); });
+  server.on("/api/delete_prev",    HTTP_POST, [this]() { handleDeletePrevious(); });
+  server.on("/api/get_settings",   HTTP_GET,  [this]() { handleGetSettings(); });
+  server.on("/api/set_settings",   HTTP_POST, [this]() { handleSetSettings(); });
+  // Static files from LittleFS
+  server.onNotFound([this]() {
     String path = server.uri();
     if (path == "/") path = "/index.html";
-    if (LittleFS.exists(path)) {
-      File f = LittleFS.open(path, "r");
-      server.streamFile(f, "text/html");
-      f.close();
+
+    if (!LittleFS.exists(path)) {
+      server.send(404, "text/plain", "Not found");
       return;
     }
-    server.send(404, "text/plain", "Not found");
+
+    File f = LittleFS.open(path, "r");
+    String type = "text/plain";
+    if      (path.endsWith(".html")) type = "text/html";
+    else if (path.endsWith(".css"))  type = "text/css";
+    else if (path.endsWith(".js"))   type = "application/javascript";
+
+    server.streamFile(f, type);
   });
 }
 
 void WebserverHandler::handleRoot() {
-  if (LittleFS.exists("/index.html")) {
-    File f = LittleFS.open("/index.html", "r");
-    server.streamFile(f, "text/html");
-    f.close();
-  } else {
+  if (!LittleFS.exists("/index.html")) {
     server.send(200, "text/plain", "Index missing");
+    return;
   }
+  File f = LittleFS.open("/index.html", "r");
+  server.streamFile(f, "text/html");
 }
 
 void WebserverHandler::handleGetWeeks() {
@@ -65,8 +69,9 @@ void WebserverHandler::handleGetWeeks() {
 
 void WebserverHandler::handleGetStorageInfo() {
   DynamicJsonDocument doc(512);
-  uint64_t used = storage->usedBytes();
-  uint64_t total = storage->totalBytes();
+  FsUsage fs = storage->getFsUsage();
+  uint64_t used  = fs.used;
+  uint64_t total = fs.total;
   int percent = (total>0)?(int)((used*100)/total):0;
   doc["used_bytes"] = (uint32_t)used;
   doc["total_bytes"] = (uint32_t)total;

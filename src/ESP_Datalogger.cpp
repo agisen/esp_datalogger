@@ -24,6 +24,9 @@ Storage storage;
 Utils utils;
 WebserverHandler webserver;
 
+////////////////////
+// IDEE: BUFFER SIZE AN MESSINTERVALL ANPASSEN => KONSTANTE ZAHL VON SCHREIBZYKLEN PRO ZEIT
+////////////////////
 // RAM-Puffer
 Measurement buffer[BUFFER_SIZE];
 uint8_t bufferCount = 0;
@@ -41,21 +44,23 @@ String g_http_password = DEFAULT_HTTP_PASSWORD;
 // Strict mode flag
 bool strictModeEnabled = true; // falls true: kein Logging wenn Jahr < 2020
 
-// Forward
+// Forward declaration
 void flushBuffer();
 void performMeasurement();
+void blinkLed(unsigned long duration);
 
 void setup() {
   Serial.begin(115200);
   delay(100);
 
   Serial.println(F("=== Datalogger starting ==="));
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW); // LED will be on during setup
 
-  // LittleFS mounten
-  if (!LittleFS.begin()) {
-    Serial.println(F("ERROR: LittleFS mount failed"));
-    // trotzdem versuchen weiterzumachen - aber Storage-Init wird fehlschlagen
-  }
+  // // LittleFS mounten --> Doppelt, erfolgt auch in storage.begin()
+  // if (!LittleFS.begin()) {
+  //   Serial.println(F("ERROR: LittleFS mount failed"));
+  // }
 
   // Storage init
   storage.begin();
@@ -65,9 +70,7 @@ void setup() {
 
   // Load settings from LittleFS (settings.json)
   if (!storage.loadSettings(g_interval_seconds, g_wifi_ssid, g_wifi_pass, g_http_password)) {
-    Serial.println(F("No settings.json found, using defaults."));
-  } else {
-    Serial.println(F("Settings loaded from settings.json"));
+    Serial.println(F("Error in Storage.loadSettings, using defaults."));
   }
 
   // Apply interval
@@ -88,15 +91,16 @@ void setup() {
   // Start measure timer immediately (first measurement after interval)
   lastMeasureMillis = millis();
 
+  digitalWrite(LED_BUILTIN, HIGH); // Ensure LED starts off after setup
   Serial.println(F("Setup complete."));
 }
 
 void loop() {
-  // Handle web server
-  webserver.handleClient();
-
   // Periodic tasks from utils (NTP check, reconnection attempts)
   utils.handle();
+
+  // Handle web server
+  webserver.handleClient();
 
   // Measurement (non-blocking)
   unsigned long nowMs = millis();
@@ -112,7 +116,7 @@ void loop() {
 
 // Perform a measurement and push into buffer (then flush when buffer full)
 void performMeasurement() {
-  Update current timestamp (NTP-backed if available)
+  // Update current timestamp (NTP-backed if available)
   time_t ts = utils.getEpoch();
   tm timeinfo;
   gmtime_r(&ts, &timeinfo);
@@ -133,7 +137,14 @@ void performMeasurement() {
     return;
   }
 
-  Serial.printf("Measured: %.2f C, %.2f %% at %lu\n", t, h, (unsigned long)ts);
+  // Print with ts if available, else without ts
+  if (ts) {
+    Serial.printf("Measured: %.2f C, %.2f %% at %lu\n", t, h, (unsigned long)ts);
+  } else {
+    Serial.printf("Measured: %.2f C, %.2f %%\n", t, h);
+  }
+  // Serial.printf("Measured: %.2f C, %.2f %%\n", t, h);
+  blinkLed(500);
 
   // Push to buffer
   buffer[bufferCount].ts = (uint32_t)ts;
@@ -164,4 +175,15 @@ void flushBuffer() {
     Serial.println(F("ERROR: Failed to flush buffer to storage"));
     // Keep buffer (to retry later) - but risk of data loss if reboot
   }
+}
+
+// Turn the global LED ON for a specified duration, default duration is 500 ms
+void blinkLed(unsigned long duration = 500) {
+  Serial.println("Blink!");
+  digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
+                                    // but actually the LED is on; this is because
+                                    // it is active low on the ESP-01)
+  delay(duration);                      // Wait for a second
+  digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off by making the voltage HIGH
+  delay(100);  
 }
