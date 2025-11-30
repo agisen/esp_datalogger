@@ -24,12 +24,17 @@
       </label>
       <button id="applyInterval">Anwenden</button>
       <button id="downloadWeek">Download aktuelle Woche (CSV)</button>
-      <button id="downloadAll">Download alles (ZIP)</button>
+      <button id="downloadAll">Download alle Wochen (ZIP)</button>
       <button id="deletePrev">Alte Wochen löschen</button>
-      <button id="deleteAll">Alle Daten löschen</button>
+      <button id="deleteAll">Alle Wochen löschen</button>
+      <button id="btnToggleMeasurement">Messung stoppen</button>
+        <span id="measureStatus" style="margin-left:8px;color:green">Messung läuft</span>
+      <button id="btnFlushBuffer" style="margin-left:16px;">Buffer jetzt speichern</button>
     </div>
 
-    <canvas id="chart" width="800" height="300"></canvas>
+    <div style="width:100%; max-width:800px; height:300px;">
+      <canvas id="chart"></canvas>
+    </div>
 
     <div id="weeksList"></div>
   </div>

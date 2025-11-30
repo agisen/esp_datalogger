@@ -87,6 +87,7 @@ void setup() {
 
   // Webserver init (serves files from LittleFS/data)
   webserver.begin(&storage, &utils, g_http_password);
+  webserver.setFlushCallback(flushBuffer);
 
   // Start measure timer immediately (first measurement after interval)
   lastMeasureMillis = millis();
@@ -106,16 +107,18 @@ void loop() {
   // Handle web server
   webserver.handleClient();
 
-  // Measurement (non-blocking)
-  unsigned long nowMs = millis();
-  if ((nowMs - lastMeasureMillis) >= measureIntervalMs) {
-    lastMeasureMillis = nowMs;
-    performMeasurement();
-  }
+  if (webserver.isMeasurementActive()) {
+    // Measurement (non-blocking)
+    unsigned long nowMs = millis();
+    if ((nowMs - lastMeasureMillis) >= measureIntervalMs) {
+      lastMeasureMillis = nowMs;
+      performMeasurement();
+    }
 
-  // Optionally: flush buffer periodically if not full for graceful shutdown safeguards
-  // (e.g., every minute) - optional
-  // (skipped here to minimize flash writes)
+    // Optionally: flush buffer periodically if not full for graceful shutdown safeguards
+    // (e.g., every minute) - optional
+    // (skipped here to minimize flash writes)
+  }
 }
 
 // Perform a measurement and push into buffer (then flush when buffer full)
@@ -163,7 +166,10 @@ void performMeasurement() {
 
 // Flush RAM buffer to LittleFS (writes batch)
 void flushBuffer() {
-  if (bufferCount == 0) return;
+  if (bufferCount == 0) {
+    Serial.println(F("Buffer is empty. Nothing to flush to storage"));
+    return;
+  }
 
   // Build array to write
   Measurement tmp[BUFFER_SIZE];

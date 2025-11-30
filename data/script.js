@@ -32,7 +32,7 @@ async function refreshStorage() {
 async function listWeeks() {
   const arr = await fetchJSON('/api/weeks');
   const div = document.getElementById('weeksList');
-  div.innerHTML = '<b>Vorhandene Wochen:</b><br>';
+  div.innerHTML = '<b>Vorhandene Wochen</b> (anklicken zum Anzeigen)<br>';
   if (arr.length === 0) div.innerHTML += 'keine Daten';
   arr.forEach(w => {
     const a = document.createElement('a');
@@ -66,23 +66,56 @@ async function loadWeek(week) {
 }
 
 function drawChart(labels, temps, hums) {
-  const ctx = document.getElementById('chart').getContext('2d');
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: 'Temperature (°C)', data: temps, borderColor: 'red', fill: false },
-        { label: 'Humidity (%)', data: hums, borderColor: 'blue', fill: false }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: { x: { display: true } }
-    }
-  });
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    // vorhandenen Chart zerstören
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Temperature (°C)',
+                    data: temps,
+                    borderColor: 'red',
+                    fill: false,
+                    yAxisID: 'yTemp'
+                },
+                {
+                    label: 'Humidity (%)',
+                    data: hums,
+                    borderColor: 'blue',
+                    fill: false,
+                    yAxisID: 'yHum'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // damit div height genutzt wird
+            scales: {
+                x: {
+                    display: true,
+                    title: { display: true, text: 'Zeit' }
+                },
+                yTemp: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: '°C' }
+                },
+                yHum: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: '%' },
+                    grid: { drawOnChartArea: false } // damit Linien sich nicht überlagern
+                }
+            }
+        }
+    });
 }
 
 async function downloadCurrentWeek() {
@@ -139,12 +172,59 @@ async function deletePrev() {
   await listWeeks();
 }
 
+// Update the UI based on measurement status
+function updateMeasurementUI(isOn) {
+  const btn = document.getElementById('btnToggleMeasurement');
+  const status = document.getElementById('measureStatus');
+
+  if (isOn) {
+    btn.innerText = 'Messung stoppen';
+    status.innerText = 'Messung läuft';
+    status.style.color = 'green';
+  } else {
+    btn.innerText = 'Messung starten';
+    status.innerText = 'Messung gestoppt';
+    status.style.color = 'red';
+  }
+}
+
+// Fetch current measurement status from server and update UI
+async function refreshMeasurementState() {
+  const r = await fetch('/api/status');
+  const js = await r.json();
+
+  updateMeasurementUI(js.measurementActive);
+  return js.measurementActive;
+}
+
+// Toggle measurement on/off on server and update UI
+async function toggleMeasurement() {
+  const r = await fetch('/api/toggleMeasurement', { method: 'POST' });
+  const js = await r.json();
+
+  updateMeasurementUI(js.measurementActive);
+}
+
+async function flushNow() {
+  try {
+    const res = await fetch('/api/flush', { method: 'POST' });
+    if (!res.ok) { alert('Flush fehlgeschlagen'); return; }
+    const json = await res.json();
+    if (json.status === 'ok') alert('Buffer gespeichert');
+  } catch (e) {
+    alert('Netzwerkfehler');
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   await refreshStorage();
   await listWeeks();
+  await refreshMeasurementState();
 
   document.getElementById('downloadWeek').addEventListener('click', downloadCurrentWeek);
   document.getElementById('downloadAll').addEventListener('click', downloadAllZip);
-  document.getElementById('deleteAll').addEventListener('click', deleteAll);
   document.getElementById('deletePrev').addEventListener('click', deletePrev);
+  document.getElementById('deleteAll').addEventListener('click', deleteAll);
+  document.getElementById('btnToggleMeasurement').addEventListener('click', toggleMeasurement);
+  document.getElementById('btnFlushBuffer').addEventListener('click', flushNow);
 });

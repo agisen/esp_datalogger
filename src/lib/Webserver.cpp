@@ -27,6 +27,9 @@ void WebserverHandler::setupRoutes() {
   server.on("/api/delete_prev",    HTTP_POST, [this]() { handleDeletePrevious(); });
   server.on("/api/get_settings",   HTTP_GET,  [this]() { handleGetSettings(); });
   server.on("/api/set_settings",   HTTP_POST, [this]() { handleSetSettings(); });
+  server.on("/api/status",         HTTP_GET,  [this]() { handleMeasurementStatus(); });
+  server.on("/api/toggleMeasurement", HTTP_POST, [this]() {handleToggleMeasurement(); });
+  server.on("/api/flush",          HTTP_POST, [this]() { handleFlushBuffer(); });
   // Static files from LittleFS
   server.onNotFound([this]() {
     String path = server.uri();
@@ -210,4 +213,47 @@ void WebserverHandler::handleSetSettings() {
   f.close();
 
   server.send(200, "application/json", "{\"status\":\"ok\"}");
+}
+
+void WebserverHandler::handleMeasurementStatus() {
+  Serial.println(F("\"handleMeasurementStatus\" called"));
+  DynamicJsonDocument doc(64);
+  doc["measurementActive"] = measurementActive;  // true oder false
+
+  String out;
+  serializeJson(doc, out);
+  server.send(200, "application/json", out);
+}
+
+void WebserverHandler::handleToggleMeasurement() {
+  // toggle internal flag
+  measurementActive = !measurementActive;
+
+  if (measurementActive) {
+    Serial.println(F("Measurement started"));
+  } else {
+    if (!measurementActive && flushCallback) {
+      Serial.println(F("Measurement stopped → flushing buffer..."));
+      flushCallback();   // <-- ruft flushBuffer() im Hauptprogramm auf
+    }
+  }
+
+  DynamicJsonDocument doc(64);
+  doc["measurementActive"] = measurementActive;
+
+  String out;
+  serializeJson(doc, out);
+  server.send(200, "application/json", out);
+}
+
+void WebserverHandler::handleFlushBuffer() {
+  if (flushCallback) {
+    flushCallback();  // <-- Hauptprogramm-Funktion ausführen
+  }
+
+  DynamicJsonDocument doc(64);
+  doc["status"] = "ok";
+  String out;
+  serializeJson(doc, out);
+  server.send(200, "application/json", out);
 }
