@@ -13,7 +13,7 @@ void Storage::begin() {
     Serial.println(F("Storage: LittleFS ready"));
   }
 
-  Serial.println("Listing all files in LittleFS:");
+    debugListFiles();
 }
 
 FsUsage Storage::getFsUsage() {
@@ -122,9 +122,8 @@ void Storage::listWeeks(std::vector<String> &outWeeks) {
   Dir dir = LittleFS.openDir("/");
   Serial.println("Listing week files in LittleFS:");
   while (dir.next()) {
-    String name = dir.fileName(); // starts with "/"
+    String name = dir.fileName();
     if (name.endsWith(".csv")) {
-      name = name.substring(1); // strip '/'
       outWeeks.push_back(name);
       Serial.println("  Found week file: " + name);
     }
@@ -182,7 +181,7 @@ bool Storage::readWeekCSV(const String &weekName, String &outContent) {
 
 void Storage::debugListFiles() {
   Dir dir = LittleFS.openDir("/");
-  Serial.println(F("Storage files:"));
+  Serial.println("Listing all files in LittleFS:");
   while (dir.next()) {
     Serial.printf("  %s  %u\n", dir.fileName().c_str(), dir.fileSize());
   }

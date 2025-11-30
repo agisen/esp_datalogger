@@ -93,6 +93,10 @@ void setup() {
 
   digitalWrite(LED_BUILTIN, HIGH); // Ensure LED starts off after setup
   Serial.println(F("Setup complete."));
+  delay(300);
+  blinkLed(300);
+  blinkLed(300);
+  blinkLed(300);
 }
 
 void loop() {
@@ -179,11 +183,11 @@ void flushBuffer() {
 
 // Turn the global LED ON for a specified duration, default duration is 500 ms
 void blinkLed(unsigned long duration = 500) {
-  Serial.println("Blink!");
+  // Serial.println("Blink!");
   digitalWrite(LED_BUILTIN, LOW);   // Turn the LED on (Note that LOW is the voltage level
                                     // but actually the LED is on; this is because
                                     // it is active low on the ESP-01)
-  delay(duration);                      // Wait for a second
+  delay(duration);                  // Wait for a second
   digitalWrite(LED_BUILTIN, HIGH);  // Turn the LED off by making the voltage HIGH
-  delay(100);  
+  delay(duration);
 }
