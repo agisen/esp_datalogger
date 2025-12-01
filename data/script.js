@@ -181,10 +181,14 @@ function updateMeasurementUI(isOn) {
     btn.innerText = 'Messung stoppen';
     status.innerText = 'Messung läuft';
     status.style.color = 'green';
+    status.classList.add('status-active');
+    status.classList.remove('status-inactive');
   } else {
     btn.innerText = 'Messung starten';
     status.innerText = 'Messung gestoppt';
     status.style.color = 'red';
+    status.classList.remove('status-active');
+    status.classList.add('status-inactive');
   }
 }
 

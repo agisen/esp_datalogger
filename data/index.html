@@ -19,20 +19,35 @@
     </div>
 
     <div id="controls">
-      <label>Intervall:
+    
+    <div class="control-group">
+        <h3>1. Messung</h3>        
+        <span id="measureStatus" style="color:green; font-weight: bold;">Messung läuft</span>
+        <button id="btnToggleMeasurement" style="margin-left:8px">Messung stoppen</button>
+
+        <br><br>
+
+        <label for="intervalSelect" style="margin-right: 5px;">Messintervall:</label>
         <select id="intervalSelect"></select>
-      </label>
-      <button id="applyInterval">Anwenden</button>
-      <button id="downloadWeek">Download aktuelle Woche (CSV)</button>
-      <button id="downloadAll">Download alle Wochen (ZIP)</button>
-      <button id="deletePrev">Alte Wochen löschen</button>
-      <button id="deleteAll">Alle Wochen löschen</button>
-      <button id="btnToggleMeasurement">Messung stoppen</button>
-        <span id="measureStatus" style="margin-left:8px;color:green">Messung läuft</span>
-      <button id="btnFlushBuffer" style="margin-left:16px;">Buffer jetzt speichern</button>
+        <button id="applyInterval">Intervall anwenden</button>
     </div>
 
-    <div style="width:100%; max-width:800px; height:300px;">
+    <div class="control-group">
+        <h3>2. Daten-Export</h3>
+        <button id="downloadWeek">Download aktuelle Woche (CSV)</button>
+        <button id="downloadAll">Download alle Wochen (ZIP)</button>
+    </div>
+
+    <div class="control-group">
+        <h3>3. Speicher & Datenverwaltung</h3>
+        <button id="btnFlushBuffer">Buffer jetzt speichern</button>
+        <button id="deletePrev">Alte Wochen löschen</button>
+        <button id="deleteAll" style="background-color: #ffcccc; color: #cc0000;">Alle Daten löschen</button>
+    </div>
+    
+</div>
+
+    <div style="width:100%; max-width:1000px; height:400px;">
       <canvas id="chart"></canvas>
     </div>
 
