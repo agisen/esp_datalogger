@@ -133,12 +133,18 @@ void WebserverHandler::handleDownloadAll() {
 }
 
 void WebserverHandler::handleDeleteAll() {
-  // Basic protection: require header "X-Auth: <password>"
-  if (!server.hasHeader("X-Auth")) {
+  Serial.println("----- DELETE_ALL() received headers -----");
+  for (int i = 0; i < server.headers(); i++) {
+    Serial.println(server.headerName(i) + ": " + server.header(i));
+  }
+  Serial.println("-----------------------------------------");
+
+  // Basic protection: require header "Authorization: <password>"
+  if (!server.hasHeader("Authorization")) {
     server.send(401, "text/plain", "missing auth");
     return;
   }
-  String val = server.header("X-Auth");
+  String val = server.header("Authorization");
   if (val != password) {
     server.send(403, "text/plain", "forbidden");
     return;
@@ -148,11 +154,11 @@ void WebserverHandler::handleDeleteAll() {
 }
 
 void WebserverHandler::handleDeletePrevious() {
-  if (!server.hasHeader("X-Auth")) {
+  if (!server.hasHeader("Authorization")) {
     server.send(401, "text/plain", "missing auth");
     return;
   }
-  String val = server.header("X-Auth");
+  String val = server.header("Authorization");
   if (val != password) {
     server.send(403, "text/plain", "forbidden");
     return;

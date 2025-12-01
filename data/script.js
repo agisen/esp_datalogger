@@ -32,7 +32,7 @@ async function refreshStorage() {
 async function listWeeks() {
   const arr = await fetchJSON('/api/weeks');
   const div = document.getElementById('weeksList');
-  div.innerHTML = '<b>Vorhandene Wochen</b> (anklicken zum Anzeigen)<br>';
+  div.innerHTML = '<b>Vorhandene Wochen</b> (Auswählen/anklicken zum Anzeigen)<br>';
   if (arr.length === 0) div.innerHTML += 'keine Daten';
   arr.forEach(w => {
     const a = document.createElement('a');
@@ -159,17 +159,32 @@ async function deleteAll() {
   if (!confirm('Alle Daten löschen? Diese Aktion ist endgültig.')) return;
   const pw = prompt('Geben Sie das Admin-Passwort ein:');
   if (!pw) return;
-  await fetch('/api/delete_all', {method:'POST', headers:{'X-Auth': pw}});
+  const response = await fetch('/api/delete_all', {
+    method: 'POST',
+    headers: { 'Authorization': pw }
+  });
+
+  if (!response.ok) { // Prüft auf Statuscodes 200-299
+      // Liest die Fehlermeldung vom Server (z.B. "forbidden")
+      const errorText = await response.text(); 
+      alert(`Löschen fehlgeschlagen: ${errorText}`);
+      return; // Abbruch bei Fehler
+  }
+
   await refreshStorage();
   await listWeeks();
 }
 
 async function deletePrev() {
-  if (!currentWeek) { alert('Wähle zuerst eine Woche'); return; }
-  if (!confirm('Alle Wochen vor der aktuellen löschen?')) return;
+  if (!currentWeek) { alert('Wähle zuerst unter \"Vorhandene Wochen\" eine Woche aus'); return; }
+  if (!confirm('Alle Wochen vor der ausgewählten löschen?')) return;
   const pw = prompt('Geben Sie das Admin-Passwort ein:');
   if (!pw) return;
-  await fetch(`/api/delete_prev?current=${encodeURIComponent(currentWeek)}`, {method:'POST', headers:{'X-Auth': pw}});
+  const response = await fetch(`/api/delete_prev?current=${encodeURIComponent(currentWeek)}`, {
+    method:'POST', 
+    headers:{'Authorization': pw}
+  });
+
   await refreshStorage();
   await listWeeks();
 }
@@ -213,6 +228,9 @@ async function toggleMeasurement() {
   const js = await r.json();
 
   updateMeasurementUI(js.measurementActive);
+  await refreshStorage();
+  await listWeeks();
+  location.reload();
 }
 
 async function flushNow() {
@@ -224,6 +242,7 @@ async function flushNow() {
   } catch (e) {
     alert('Netzwerkfehler');
   }
+  location.reload();
 }
 
 async function applyInterval() {
@@ -237,6 +256,7 @@ async function applyInterval() {
   });
 
   alert("Messintervall gespeichert");
+  location.reload();
 }
 
 async function displayLatestMeasurement() {

@@ -148,7 +148,7 @@ bool Storage::saveBatch(Measurement *arr, uint8_t len) {
 void Storage::listWeeks(std::vector<String> &outWeeks) {
   outWeeks.clear();
   Dir dir = LittleFS.openDir("/");
-  Serial.println("Listing week files in LittleFS:");
+  Serial.println("Storage: Listing week files in LittleFS:");
   while (dir.next()) {
     String name = dir.fileName();
     if (name.endsWith(".csv")) {
@@ -178,7 +178,8 @@ void Storage::deleteAllWeeks() {
   while (dir.next()) {
     String name = dir.fileName();
     if (name.endsWith(".csv")) {
-      LittleFS.remove(name);
+      LittleFS.remove("/" + name);
+      Serial.printf("Storage: deleted %s\n", name.c_str());
     }
   }
 }
@@ -209,7 +210,7 @@ bool Storage::readWeekCSV(const String &weekName, String &outContent) {
 
 void Storage::debugListFiles() {
   Dir dir = LittleFS.openDir("/");
-  Serial.println("Listing all files in LittleFS:");
+  Serial.println("Storage: Listing all files in LittleFS:");
   while (dir.next()) {
     Serial.printf("  %s  %u\n", dir.fileName().c_str(), dir.fileSize());
   }
