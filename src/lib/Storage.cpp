@@ -107,8 +107,8 @@ bool Storage::saveBatch(Measurement *arr, uint8_t len) {
 
   // Write all entries
   for (uint8_t i = 0; i < len; i++) {
-    char line[64];
-    snprintf(line, sizeof(line), "%lu;%.2f;%.2f\n", (unsigned long)arr[i].ts, arr[i].temp, arr[i].hum);
+    char line[32];
+    snprintf(line, sizeof(line), "%lu;%.1f;%.1f\n", (unsigned long)arr[i].ts, arr[i].temp, arr[i].hum);
     f.print(line);
   }
   f.close();

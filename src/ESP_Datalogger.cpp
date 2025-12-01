@@ -146,11 +146,11 @@ void performMeasurement() {
 
   // Print with ts if available, else without ts
   if (ts) {
-    Serial.printf("Measured: %.2f C, %.2f %% at %lu\n", t, h, (unsigned long)ts);
+    Serial.printf("Measured: %.1f C, %.1f %% at %lu\n", t, h, (unsigned long)ts);
   } else {
-    Serial.printf("Measured: %.2f C, %.2f %%\n", t, h);
+    Serial.printf("Measured: %.1f C, %.1f %%\n", t, h);
   }
-  // Serial.printf("Measured: %.2f C, %.2f %%\n", t, h);
+  // Serial.printf("Measured: %.1f C, %.1f %%\n", t, h);
   blinkLed(500);
 
   // Push to buffer
