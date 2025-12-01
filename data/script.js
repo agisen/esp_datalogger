@@ -129,7 +129,7 @@ async function downloadCurrentWeek() {
   a.remove();
 }
 
-async function downloadAllZip() {
+async function downloadAllWeekZip() {
   // Get list of weeks
   const weeks = await fetchJSON('/api/download_all');
   if (!weeks || weeks.length==0) { alert('Keine Daten'); return; }
@@ -198,6 +198,10 @@ async function refreshMeasurementState() {
   const js = await r.json();
 
   updateMeasurementUI(js.measurementActive);
+
+  // Intervall im Dropdown setzen
+  document.getElementById('intervalSelect').value = js.interval;
+
   return js.measurementActive;
 }
 
@@ -220,15 +224,30 @@ async function flushNow() {
   }
 }
 
+async function applyInterval() {
+  const sel = document.getElementById('intervalSelect');
+  const val = parseInt(sel.value);
+
+  await fetch('/api/set_interval', {
+    method: 'POST',
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ interval: val })
+  });
+
+  alert("Messintervall gespeichert");
+}
+
+
 document.addEventListener('DOMContentLoaded', async () => {
   await refreshStorage();
   await listWeeks();
   await refreshMeasurementState();
 
+  document.getElementById('btnToggleMeasurement').addEventListener('click', toggleMeasurement);
+  document.getElementById('btnApplyInterval').addEventListener('click', applyInterval);
   document.getElementById('downloadWeek').addEventListener('click', downloadCurrentWeek);
-  document.getElementById('downloadAll').addEventListener('click', downloadAllZip);
+  document.getElementById('downloadAllWeek').addEventListener('click', downloadAllWeekZip);
+  document.getElementById('btnFlushBuffer').addEventListener('click', flushNow);
   document.getElementById('deletePrev').addEventListener('click', deletePrev);
   document.getElementById('deleteAll').addEventListener('click', deleteAll);
-  document.getElementById('btnToggleMeasurement').addEventListener('click', toggleMeasurement);
-  document.getElementById('btnFlushBuffer').addEventListener('click', flushNow);
 });

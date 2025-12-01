@@ -5,12 +5,20 @@
 #include "Storage.h"
 #include "Utils.h"
 
+// ---- Globals aus Hauptprogramm ----
+extern uint32_t g_interval_seconds;
+extern String g_wifi_ssid;
+extern String g_wifi_pass;
+extern String g_http_password;
+// ----------------------------------
+
 class WebserverHandler {
 public:
   WebserverHandler();
   void begin(Storage* storagePtr, Utils* utilsPtr, const String& httpPassword);
   void handleClient();
   bool isMeasurementActive() const { return measurementActive; }
+  void setIntervalChangedCallback(void (*cb)()) { intervalChangedCallback = cb; }
   void setFlushCallback(void (*cb)()) { flushCallback = cb; }
 
 private:
@@ -19,6 +27,7 @@ private:
   Utils* utils;
   String password;
   bool measurementActive = true;
+  void (*intervalChangedCallback)() = nullptr;
   void (*flushCallback)() = nullptr;
 
   void setupRoutes();
@@ -35,4 +44,5 @@ private:
   void handleMeasurementStatus();
   void handleToggleMeasurement();
   void handleFlushBuffer();
+  void handleSetInterval();
 };

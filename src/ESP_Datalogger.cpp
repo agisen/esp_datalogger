@@ -45,6 +45,7 @@ String g_http_password = DEFAULT_HTTP_PASSWORD;
 bool strictModeEnabled = true; // falls true: kein Logging wenn Jahr < 2020
 
 // Forward declaration
+void applyInterval();
 void flushBuffer();
 void performMeasurement();
 void blinkLed(unsigned long duration);
@@ -74,7 +75,7 @@ void setup() {
   }
 
   // Apply interval
-  measureIntervalMs = (unsigned long)g_interval_seconds * 1000UL;
+  applyInterval();
 
   // Connect WiFi (non-blocking attempt inside utils)
   utils.connectWiFi(g_wifi_ssid.c_str(), g_wifi_pass.c_str());
@@ -87,6 +88,7 @@ void setup() {
 
   // Webserver init (serves files from LittleFS/data)
   webserver.begin(&storage, &utils, g_http_password);
+  webserver.setIntervalChangedCallback(applyInterval);
   webserver.setFlushCallback(flushBuffer);
 
   // Start measure timer immediately (first measurement after interval)
@@ -162,6 +164,12 @@ void performMeasurement() {
   if (bufferCount >= BUFFER_SIZE) {
     flushBuffer();
   }
+}
+
+// Set the measurement interval
+void applyInterval() {
+    measureIntervalMs = (unsigned long)g_interval_seconds * 1000UL;
+    Serial.printf("Measurement interval set: every %lu s\n", (unsigned long)(measureIntervalMs) / 1000UL);
 }
 
 // Flush RAM buffer to LittleFS (writes batch)

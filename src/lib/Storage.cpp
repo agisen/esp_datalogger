@@ -59,6 +59,34 @@ bool Storage::loadSettings(uint32_t &intervalSeconds, String &ssid, String &pass
   return true;
 }
 
+bool Storage::saveSettings(uint32_t intervalSeconds, const String &ssid, const String &pass, const String &httpPassword) {
+
+  DynamicJsonDocument doc(512);
+
+  // exakt dieselben Keys wie loadSettings()
+  doc["interval"] = intervalSeconds;
+  doc["wifi_ssid"] = ssid;
+  doc["wifi_pass"] = pass;
+  doc["http_password"] = httpPassword;
+
+  File f = LittleFS.open("/settings.json", "w");
+  if (!f) {
+    Serial.println(F("Storage: failed to open settings.json for writing"));
+    return false;
+  }
+
+  if (serializeJson(doc, f) == 0) {
+    Serial.println(F("Storage: failed to write settings.json"));
+    f.close();
+    return false;
+  }
+
+  f.close();
+  Serial.println(F("Storage: settings.json saved"));
+
+  return true;
+}
+
 static String weekNameFromTime(time_t t) {
   // simple week number (year-week) using day-of-year/7 (not strict ISO)
   tm tmstruct;

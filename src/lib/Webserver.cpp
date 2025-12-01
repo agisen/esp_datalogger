@@ -30,6 +30,8 @@ void WebserverHandler::setupRoutes() {
   server.on("/api/status",         HTTP_GET,  [this]() { handleMeasurementStatus(); });
   server.on("/api/toggleMeasurement", HTTP_POST, [this]() {handleToggleMeasurement(); });
   server.on("/api/flush",          HTTP_POST, [this]() { handleFlushBuffer(); });
+  server.on("/api/set_interval",   HTTP_POST, [this]() { handleSetInterval(); });
+
   // Static files from LittleFS
   server.onNotFound([this]() {
     String path = server.uri();
@@ -218,7 +220,8 @@ void WebserverHandler::handleSetSettings() {
 void WebserverHandler::handleMeasurementStatus() {
   Serial.println(F("\"handleMeasurementStatus\" called"));
   DynamicJsonDocument doc(64);
-  doc["measurementActive"] = measurementActive;  // true oder false
+  doc["measurementActive"] = measurementActive;
+  doc["interval"] = g_interval_seconds / 60;
 
   String out;
   serializeJson(doc, out);
@@ -256,4 +259,25 @@ void WebserverHandler::handleFlushBuffer() {
   String out;
   serializeJson(doc, out);
   server.send(200, "application/json", out);
+}
+
+void WebserverHandler::handleSetInterval() {
+  if (!server.hasArg("plain")) {
+    server.send(400, "application/json", "{\"error\":\"no data\"}");
+    return;
+  }
+
+  DynamicJsonDocument doc(128);
+  deserializeJson(doc, server.arg("plain"));
+
+  uint32_t newInterval = doc["interval"] | 300;
+
+  g_interval_seconds  = newInterval*60;
+  intervalChangedCallback();
+
+  Serial.printf("New interval set: every %d min\n", newInterval);
+
+  storage->saveSettings(g_interval_seconds, g_wifi_ssid, g_wifi_pass, g_http_password);
+
+  server.send(200, "application/json", "{\"status\":\"ok\"}");
 }

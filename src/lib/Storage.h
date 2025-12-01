@@ -22,8 +22,12 @@ public:
   // returns true on success
   bool saveBatch(Measurement *arr, uint8_t len);
 
-  // Load settings from /config/settings.json (if exists). Returns true if loaded
+  // Load settings from /data/settings.json (if exists). Returns true if loaded
   bool loadSettings(uint32_t &intervalSeconds, String &ssid, String &pass, String &httpPassword);
+
+  // Save settings to /data/settings.json
+  bool saveSettings(uint32_t intervalSeconds, const String& ssid, const String& pass, const String& httpPassword);
+
 
   // Storage info
   FsUsage getFsUsage();
