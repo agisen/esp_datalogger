@@ -34,11 +34,23 @@ async function listWeeks() {
   const div = document.getElementById('weeksList');
   div.innerHTML = '<b>Vorhandene Wochen</b> (Auswählen/anklicken zum Anzeigen)<br>';
   if (arr.length === 0) div.innerHTML += 'keine Daten';
+  const params = new URLSearchParams(window.location.search);
+  const active = params.get("week");
+
   arr.forEach(w => {
     const a = document.createElement('a');
-    a.href = '#';
+    a.href = '?week=' + encodeURIComponent(w);
     a.innerText = w;
-    a.onclick = (e) => { e.preventDefault(); loadWeek(w); return false; };
+    if (w === active) a.classList.add("active-week");
+    a.onclick = (e) => { 
+      e.preventDefault();
+      history.pushState({}, "", '?week=' + encodeURIComponent(w));
+      loadWeek(w);
+      document.querySelectorAll('#weeksList a').forEach(el => el.classList.remove('active-week'));
+      a.classList.add('active-week');
+
+      return false; 
+    };
     div.appendChild(a);
     div.appendChild(document.createTextNode(' '));
   });
@@ -64,7 +76,7 @@ async function loadWeek(week) {
   }
   drawChart(labels, temps, hums);
   // Update last measured value
-  displayLatestMeasurement();
+  await displayLatestMeasurement();
 }
 
 function drawChart(labels, temps, hums) {
@@ -156,6 +168,11 @@ async function downloadAllWeekZip() {
 }
 
 async function deleteAll() {
+  // Wenn URL geändert, URL zurücksetzen
+  if (new URLSearchParams(window.location.search).has("week")) {
+    history.replaceState({}, "", window.location.pathname);
+  }
+  
   if (!confirm('Alle Daten löschen? Diese Aktion ist endgültig.')) return;
   const pw = prompt('Geben Sie das Admin-Passwort ein:');
   if (!pw) return;
@@ -176,6 +193,11 @@ async function deleteAll() {
 }
 
 async function deletePrev() {
+  // Wenn URL geändert, URL zurücksetzen
+  if (new URLSearchParams(window.location.search).has("week")) {
+    history.replaceState({}, "", window.location.pathname);
+  }
+  
   if (!currentWeek) { alert('Wähle zuerst unter \"Vorhandene Wochen\" eine Woche aus'); return; }
   if (!confirm('Alle Wochen vor der ausgewählten löschen?')) return;
   const pw = prompt('Geben Sie das Admin-Passwort ein:');
@@ -281,11 +303,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('btnToggleMeasurement').addEventListener('click', toggleMeasurement);
   document.getElementById('btnApplyInterval').addEventListener('click', applyInterval);
-  document.getElementById('downloadWeek').addEventListener('click', downloadCurrentWeek);
-  document.getElementById('downloadAllWeek').addEventListener('click', downloadAllWeekZip);
+  document.getElementById('btnDownloadWeek').addEventListener('click', downloadCurrentWeek);
+  document.getElementById('btnDownloadAllWeek').addEventListener('click', downloadAllWeekZip);
   document.getElementById('btnFlushBuffer').addEventListener('click', flushNow);
-  document.getElementById('deletePrev').addEventListener('click', deletePrev);
-  document.getElementById('deleteAll').addEventListener('click', deleteAll);
+  document.getElementById('btnDeletePrev').addEventListener('click', deletePrev);
+  document.getElementById('btnDeleteAll').addEventListener('click', deleteAll);
 
-  displayLatestMeasurement();
+  // Woche aus URL laden
+  const params = new URLSearchParams(window.location.search);
+  const savedWeek = params.get("week");
+  if (params.get("week")) {
+    currentWeek = savedWeek;
+    await loadWeek(savedWeek);
+  } else {
+    await displayLatestMeasurement();
+  }
 });

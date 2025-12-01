@@ -118,3 +118,8 @@ button#deleteAll:hover {
     border: 1px solid #f44336; /* Dunkelroter Rahmen */
     background-color: #ffebee; /* Heller roter Hintergrund */
 }
+
+.active-week {
+    font-weight: bold;
+    text-decoration: underline;
+}
