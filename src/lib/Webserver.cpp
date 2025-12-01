@@ -31,6 +31,8 @@ void WebserverHandler::setupRoutes() {
   server.on("/api/toggleMeasurement", HTTP_POST, [this]() {handleToggleMeasurement(); });
   server.on("/api/flush",          HTTP_POST, [this]() { handleFlushBuffer(); });
   server.on("/api/set_interval",   HTTP_POST, [this]() { handleSetInterval(); });
+  server.on("/api/latestMeasurement", HTTP_GET, [this]() { handleLastMeasurement(); });
+
 
   // Static files from LittleFS
   server.onNotFound([this]() {
@@ -281,3 +283,15 @@ void WebserverHandler::handleSetInterval() {
 
   server.send(200, "application/json", "{\"status\":\"ok\"}");
 }
+
+void WebserverHandler::handleLastMeasurement() {
+  DynamicJsonDocument doc(128);
+  doc["temp"] = lastTemp; // float
+  doc["hum"]  = lastHum;  // float
+  doc["ts"]   = lastTs;   // uint32_t
+
+  String out;
+  serializeJson(doc, out);
+  server.send(200, "application/json", out);
+}
+

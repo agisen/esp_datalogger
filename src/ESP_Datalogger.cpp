@@ -100,6 +100,9 @@ void setup() {
   blinkLed(300);
   blinkLed(300);
   blinkLed(300);
+
+  // Perform first Measurement
+  performMeasurement();
 }
 
 void loop() {
@@ -149,6 +152,7 @@ void performMeasurement() {
   // Print with ts if available, else without ts
   if (ts) {
     Serial.printf("Measured: %.1f C, %.1f %% at %lu\n", t, h, (unsigned long)ts);
+    webserver.updateLastMeasurement(t, h, ts);
   } else {
     Serial.printf("Measured: %.1f C, %.1f %%\n", t, h);
   }

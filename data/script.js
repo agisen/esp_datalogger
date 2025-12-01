@@ -63,6 +63,8 @@ async function loadWeek(week) {
     hums.push(parseFloat(parts[2]));
   }
   drawChart(labels, temps, hums);
+  // Update last measured value
+  displayLatestMeasurement();
 }
 
 function drawChart(labels, temps, hums) {
@@ -237,6 +239,20 @@ async function applyInterval() {
   alert("Messintervall gespeichert");
 }
 
+async function displayLatestMeasurement() {
+  try {
+    const r = await fetch('/api/latestMeasurement');
+    if (!r.ok) return;
+
+    const js = await r.json();
+    const span = document.getElementById('live');
+    const timeStr = new Date(js.ts * 1000).toLocaleTimeString();
+    span.innerText = `${js.temp.toFixed(1)} °C, ${js.hum.toFixed(1)} % (${timeStr})`;
+  } catch (e) {
+    console.error('Failed to fetch latest measurement', e);
+  }
+}
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   await refreshStorage();
@@ -250,4 +266,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btnFlushBuffer').addEventListener('click', flushNow);
   document.getElementById('deletePrev').addEventListener('click', deletePrev);
   document.getElementById('deleteAll').addEventListener('click', deleteAll);
+
+  displayLatestMeasurement();
 });

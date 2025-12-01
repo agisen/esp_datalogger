@@ -20,12 +20,20 @@ public:
   bool isMeasurementActive() const { return measurementActive; }
   void setIntervalChangedCallback(void (*cb)()) { intervalChangedCallback = cb; }
   void setFlushCallback(void (*cb)()) { flushCallback = cb; }
+  void updateLastMeasurement(float t, float h, uint32_t ts) {
+        lastTemp = t;
+        lastHum = h;
+        lastTs = ts;
+  }
 
 private:
   ESP8266WebServer server;
   Storage* storage;
   Utils* utils;
   String password;
+  float lastTemp = 0;
+  float lastHum = 0;
+  uint32_t lastTs = 0;
   bool measurementActive = true;
   void (*intervalChangedCallback)() = nullptr;
   void (*flushCallback)() = nullptr;
@@ -45,4 +53,5 @@ private:
   void handleToggleMeasurement();
   void handleFlushBuffer();
   void handleSetInterval();
+  void handleLastMeasurement();
 };
